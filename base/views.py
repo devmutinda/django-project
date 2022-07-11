@@ -15,6 +15,14 @@ from django.contrib.auth.forms import UserCreationForm
 #     {'id': 3, 'name': 'Frontend developers'},
 # ]
 
+def userProfile(request, pk):
+    user = User.objects.get(id=pk)
+    rooms = user.room_set.all()
+    topics = Topic.objects.all()
+    room_messages = user.message_set.all()
+    context = {'user': user, 'rooms': rooms, 'topics': topics, 'room_messages': room_messages}
+    return render(request, 'base/profile.html', context)
+
 def loginPage(request):
     page = 'login'
     if request.user.is_authenticated:
@@ -71,7 +79,7 @@ def home(request):
         Q(description__icontains=q)
         )
     room_count = rooms.count()
-    room_messages = Message.objects.all()
+    room_messages = Message.objects.filter(Q(room__name__icontains=q))
     context = {'rooms': rooms, 'topics': topics, 'room_count': room_count, 'room_messages': room_messages}
     return render(request, 'base/home.html', context)
 
