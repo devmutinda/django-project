@@ -1,8 +1,11 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
+from django.contrib import messages
+from django.contrib.auth.models import User
 from .models import Room, Topic
 from .forms import RoomForm
 from django.db.models import Q
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 
 # rooms = [
 #     {'id': 1, 'name': 'Lets learn python!'},
@@ -10,13 +13,28 @@ from django.db.models import Q
 #     {'id': 3, 'name': 'Frontend developers'},
 # ]
 
-def deleteRoom(request, pk):
-    room = Room.objects.get(id=pk)
-    context = {'obj': room}
+def loginPage(request):
     if request.method == 'POST':
-        room.delete()
-        return redirect('home')
-    return render(request, 'base/delete.html', context)
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+
+        try:
+            user = User.objects.get(username=username)
+        except Exception:
+            messages.error(request, "User does not exist")
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None:
+            login(request, user)
+            return redirect('home')
+        else:
+            messages.error(request, "Username OR password does not exist") 
+    context = {}
+    return render(request, 'base/login_register.html', context)
+
+def logoutUser(request):
+    logout(request)
+    return redirect('home')
 
 def home(request):
     q = request.GET.get('q') if request.GET.get('q') != None else ''
@@ -26,11 +44,12 @@ def home(request):
     # else:
     #     rooms = Room.objects.filter(topic__name=q)
     rooms = Room.objects.filter(
-        Q(topic__name__icontains=q) or
-        Q(name__icontains=q) or
+        Q(topic__name__icontains=q) |
+        Q(name__icontains=q) |
         Q(description__icontains=q)
         )
-    context = {'rooms': rooms, 'topics': topics}
+    room_count = rooms.count()
+    context = {'rooms': rooms, 'topics': topics, 'room_count': room_count}
     return render(request, 'base/home.html', context)
 
 def room(request, pk):
@@ -38,7 +57,8 @@ def room(request, pk):
     context = {'room': room}
     return render(request, 'base/room.html', context)
 
-def form(request):
+@login_required(login_url='login')
+def createRoom(request):
     form = RoomForm()
     if request.method == 'POST':
         form = RoomForm(request.POST)
@@ -48,6 +68,7 @@ def form(request):
     context = {'form': form}
     return render(request, 'base/room_form.html', context)
 
+@login_required(login_url='login')
 def updateRoom(request, pk):
     room = Room.objects.get(id=pk)
     form = RoomForm(instance=room)
@@ -58,3 +79,12 @@ def updateRoom(request, pk):
             return redirect('home')
     context = {'form': form}
     return render(request, 'base/room_form.html', context)
+
+@login_required(login_url='login')
+def deleteRoom(request, pk):
+    room = Room.objects.get(id=pk)
+    context = {'obj': room}
+    if request.method == 'POST':
+        room.delete()
+        return redirect('home')
+    return render(request, 'base/delete.html', context)
