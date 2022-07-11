@@ -1,2 +1,2 @@
 # django-project
-This repo contains discord server clone built using django.
+This repo contains a chat room web app created using django.
