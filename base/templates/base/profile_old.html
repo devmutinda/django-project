@@ -1,0 +1,24 @@
+{%  extends 'main.html' %}
+
+{% block content %}
+<!-- <styl>
+    .profile-wrapper{
+        display: grid;
+        grid-template-columns: 1fr 3fr 1fr;
+    } -->
+<main class="layout layout--3">
+<div class="container">
+    <div>
+        {% include 'base/topics_component.html' %}
+    </div>
+    <div>
+        {% include 'base/feed_component.html' %}
+    </div>
+    <div>
+        {% include 'base/activity_component.html' %}
+    </div>
+    
+</div>
+</main>
+
+{% endblock content %}
